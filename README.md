@@ -1,54 +1,114 @@
-# e-table and Mystery solved
-E192, E96, E48 resistors IEC-60063-2015
+# e-table
 
+Find optimal resistor configurations for a target resistance using E-series standards.
 
+Given a target resistance, this tool finds the best single resistor or two-resistor combination (series or parallel) from the E-series standard values, ranked by how well the tolerance envelope contains the target.
 
-E192, E96, E48 are precision 3, while E24, E12, E6, and E3 are precision 2. Read about the mystery.  
+## Installation
 
-        '''python
-        from math import floor, log10
-        #decade e table
-        def e_decade_table(es:int=96, precision:int=3,decade:int=1)->list:
-            resistors = [10**(decade-1)]
-            for i in range(1,es)  : # one decade
-                value = (10**(i/es)) # value
-                value = value * 10**(decade-1)
-                sig_digit = round(value, -int(floor(log10(abs(value)))) + (precision - 1))        
-                resistors.append(sig_digit)
-            return resistors
-        '''
-The mystery is solved... E24, E12, E6 and E3 are not mathematically derived.
+```bash
+pip install e-table
+```
 
-From IEC-60063-2015
+Or install from source:
 
-"NOTE The values of the E24 series in the range of 27 through 47, and the value 82, divert from the exact mathematical rule. However, a correction of this deviation has never seemed appropriate in light of the historical relevance of this series, having been established prior to the 1952 release of the first edition of this standard."
+```bash
+git clone https://github.com/commuted/e-table.git
+cd e-table
+pip install -e .
+```
 
-        '''
-        E24, E12, E6, E3
-        10, 10, 10, 10
-        11
-        12, 12
-        13
-        15, 15, 15
-        16
-        18, 18
-        20
-        22, 22, 22, 22
-        24
-        27, 27
-        30
-        33, 33, 33
-        36
-        39, 39
-        43
-        47, 47, 47, 47
-        51
-        56, 56
-        62
-        68, 68, 68
-        75
-        82, 82
-        91
-        '''
-        
+## Usage
 
+### Command Line
+
+```bash
+# Find configurations for 1580 ohms
+e-table 1580
+
+# Supports k (kilo) and M (mega) suffixes
+e-table 4.7k
+e-table 2.2M
+
+# Show more results
+e-table 1580 -n 10
+
+# Use different E-series (E24 instead of E96)
+e-table 1580 -e 24
+
+# Use 5% tolerance resistors
+e-table 1580 -t 5
+
+# Only show single/series/parallel results
+e-table 1580 --single-only
+e-table 1580 --series-only
+e-table 1580 --parallel-only
+```
+
+### Python API
+
+```python
+from e_table import (
+    find_best_resistor_config,
+    create_table,
+    create_series_table,
+    create_parallel_table,
+)
+
+# Create lookup tables (do once, reuse for multiple queries)
+base_table = create_table(es=96, decades=6, tolerance=0.01)
+series_table = create_series_table(base_table)
+parallel_table = create_parallel_table(base_table)
+
+# Find best configurations for target
+results = find_best_resistor_config(
+    target=1580,
+    base_table=base_table,
+    series_table=series_table,
+    parallel_table=parallel_table,
+    n=5
+)
+
+for r in results:
+    print(f"{r['config']}: {r['resistors']} = {r['nominal']}Ω")
+```
+
+## How It Works
+
+1. Generates E-series values (default E96) across multiple decades with tolerance bounds
+2. Computes all series combinations: R_total = R1 + R2
+3. Computes all parallel combinations: R_total = (R1 × R2)/(R1 + R2)
+4. Scores each configuration by how well the tolerance envelope contains the target
+5. Returns top-n results sorted by score
+
+The scoring function returns 0 if the target falls within the tolerance envelope, otherwise returns the normalized distance to the nearest bound. A small tiebreaker based on relative error ensures consistent ordering for equal scores.
+
+## E-Series Standards
+
+The E-series (IEC 60063) defines preferred number values for electronic components:
+
+| Series | Values/Decade | Typical Tolerance |
+|--------|--------------|-------------------|
+| E6     | 6            | 20%               |
+| E12    | 12           | 10%               |
+| E24    | 24           | 5%                |
+| E48    | 48           | 2%                |
+| E96    | 96           | 1%                |
+| E192   | 192          | 0.5%              |
+
+## Development
+
+```bash
+# Install dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run tests with coverage
+pytest --cov=e_table --cov-report=term-missing
+```
+
+## License
+
+MIT
