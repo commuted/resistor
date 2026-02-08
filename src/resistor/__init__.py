@@ -1,4 +1,4 @@
-"""E-Table: Resistor value optimization using E-series standards."""
+"""Resistor: Find optimal resistor configurations using E-series standards."""
 
 from .solver import (
     find_best_resistor_config,

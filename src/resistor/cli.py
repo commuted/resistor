@@ -1,4 +1,4 @@
-"""Command-line interface for e-table."""
+"""Command-line interface for resistor."""
 
 import argparse
 import sys
@@ -17,10 +17,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  e-table 1580              # Find configs for 1580 ohms
-  e-table 4.7k              # Find configs for 4700 ohms
-  e-table 2.2M -n 10        # Find top 10 configs for 2.2M ohms
-  e-table 100 --tolerance 5 # Use 5% tolerance resistors
+  resistor 1580              # Find configs for 1580 ohms
+  resistor 4.7k              # Find configs for 4700 ohms
+  resistor 2.2M -n 10        # Find top 10 configs for 2.2M ohms
+  resistor 100 --tolerance 5 # Use 5% tolerance resistors
         """
     )
     parser.add_argument(

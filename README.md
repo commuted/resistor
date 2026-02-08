@@ -1,4 +1,4 @@
-# e-table
+# resistor
 
 Find optimal resistor configurations for a target resistance using E-series standards.
 
@@ -7,7 +7,7 @@ Given a target resistance, this tool finds the best single resistor or two-resis
 ## Installation
 
 ```bash
-pip install e-table
+pip install resistor
 ```
 
 Or install from source:
@@ -24,31 +24,31 @@ pip install -e .
 
 ```bash
 # Find configurations for 1580 ohms
-e-table 1580
+resistor 1580
 
 # Supports k (kilo) and M (mega) suffixes
-e-table 4.7k
-e-table 2.2M
+resistor 4.7k
+resistor 2.2M
 
 # Show more results
-e-table 1580 -n 10
+resistor 1580 -n 10
 
 # Use different E-series (E24 instead of E96)
-e-table 1580 -e 24
+resistor 1580 -e 24
 
 # Use 5% tolerance resistors
-e-table 1580 -t 5
+resistor 1580 -t 5
 
 # Only show single/series/parallel results
-e-table 1580 --single-only
-e-table 1580 --series-only
-e-table 1580 --parallel-only
+resistor 1580 --single-only
+resistor 1580 --series-only
+resistor 1580 --parallel-only
 ```
 
 ### Python API
 
 ```python
-from e_table import (
+from resistor import (
     find_best_resistor_config,
     create_table,
     create_series_table,
@@ -106,7 +106,7 @@ pip install -e ".[dev]"
 pytest
 
 # Run tests with coverage
-pytest --cov=e_table --cov-report=term-missing
+pytest --cov=resistor --cov-report=term-missing
 ```
 
 ## License

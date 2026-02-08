@@ -1,9 +1,9 @@
-"""Unit tests for e_table solver."""
+"""Unit tests for resistor solver."""
 
 import numpy as np
 import pytest
 
-from e_table.solver import (
+from resistor.solver import (
     e_decade_table,
     create_table,
     create_series_table,
@@ -243,31 +243,31 @@ class TestCLIParsing:
     """Tests for CLI helper functions."""
 
     def test_parse_resistance_plain(self):
-        from e_table.cli import parse_resistance
+        from resistor.cli import parse_resistance
         assert parse_resistance("1000") == 1000.0
 
     def test_parse_resistance_kilo(self):
-        from e_table.cli import parse_resistance
+        from resistor.cli import parse_resistance
         assert parse_resistance("4.7k") == 4700.0
         assert parse_resistance("4.7K") == 4700.0
 
     def test_parse_resistance_mega(self):
-        from e_table.cli import parse_resistance
+        from resistor.cli import parse_resistance
         assert parse_resistance("2.2M") == 2200000.0
         assert parse_resistance("2.2m") == 2200000.0
 
     def test_parse_resistance_invalid(self):
-        from e_table.cli import parse_resistance
+        from resistor.cli import parse_resistance
         assert parse_resistance("abc") is None
 
     def test_format_resistance_ohms(self):
-        from e_table.cli import format_resistance
+        from resistor.cli import format_resistance
         assert format_resistance(100) == "100"
 
     def test_format_resistance_kilo(self):
-        from e_table.cli import format_resistance
+        from resistor.cli import format_resistance
         assert format_resistance(4700) == "4.7k"
 
     def test_format_resistance_mega(self):
-        from e_table.cli import format_resistance
+        from resistor.cli import format_resistance
         assert format_resistance(2200000) == "2.2M"

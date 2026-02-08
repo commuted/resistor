@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "e-table"
+name = "resistor"
 version = "0.1.0"
 description = "Find optimal resistor configurations using E-series standards"
 readme = "README.md"
@@ -35,11 +35,11 @@ dev = [
 ]
 
 [project.scripts]
-e-table = "e_table.cli:main"
+resistor = "resistor.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/ronaldoussoren/e-table"
-Repository = "https://github.com/ronaldoussoren/e-table"
+Homepage = "https://github.com/commuted/e-table"
+Repository = "https://github.com/commuted/e-table"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -49,7 +49,7 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [tool.coverage.run]
-source = ["src/e_table"]
+source = ["src/resistor"]
 branch = true
 
 [tool.coverage.report]
