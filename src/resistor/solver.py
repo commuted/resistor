@@ -2,6 +2,15 @@
 
 import numpy as np
 
+# IEC 60063 standard values for E24 and below.
+# These diverge from the mathematical 10^(k/es) formula.
+_IEC_E_VALUES = {
+    6:  [1.0, 1.5, 2.2, 3.3, 4.7, 6.8],
+    12: [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2],
+    24: [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0,
+         3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1],
+}
+
 
 def e_decade_table(es: int = 96, precision: int = 3, decade: int = 1) -> np.ndarray:
     """Generate one decade of E-series values with correct significant-figure rounding.
@@ -14,6 +23,9 @@ def e_decade_table(es: int = 96, precision: int = 3, decade: int = 1) -> np.ndar
     Returns:
         Array of rounded resistor values for one decade
     """
+    if es in _IEC_E_VALUES:
+        return np.array(_IEC_E_VALUES[es]) * 10 ** (decade - 1)
+
     k = np.arange(es)
     exponents = k / es
     values = 10.0 ** (exponents + (decade - 1))

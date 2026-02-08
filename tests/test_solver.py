@@ -50,6 +50,44 @@ class TestEDecadeTable:
             assert np.any(np.isclose(result, val, rtol=0.01)), f"{val} not found"
 
 
+    def test_e24_iec_standard_values(self):
+        """E24 first-decade values should match IEC 60063 exactly."""
+        result = e_decade_table(es=24, decade=1)
+        expected = [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0,
+                    3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1]
+        np.testing.assert_array_equal(result, expected)
+
+    def test_e12_iec_standard_values(self):
+        """E12 first-decade values should match IEC 60063 exactly."""
+        result = e_decade_table(es=12, decade=1)
+        expected = [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2]
+        np.testing.assert_array_equal(result, expected)
+
+    def test_e6_iec_standard_values(self):
+        """E6 first-decade values should match IEC 60063 exactly."""
+        result = e_decade_table(es=6, decade=1)
+        expected = [1.0, 1.5, 2.2, 3.3, 4.7, 6.8]
+        np.testing.assert_array_equal(result, expected)
+
+    def test_e12_subset_of_e24(self):
+        """E12 values should be a subset of E24."""
+        e12 = set(e_decade_table(es=12, decade=1))
+        e24 = set(e_decade_table(es=24, decade=1))
+        assert e12.issubset(e24)
+
+    def test_e6_subset_of_e12(self):
+        """E6 values should be a subset of E12."""
+        e6 = set(e_decade_table(es=6, decade=1))
+        e12 = set(e_decade_table(es=12, decade=1))
+        assert e6.issubset(e12)
+
+    def test_e24_decade_scaling(self):
+        """E24 decade 2 values should be 10x decade 1."""
+        d1 = e_decade_table(es=24, decade=1)
+        d2 = e_decade_table(es=24, decade=2)
+        np.testing.assert_allclose(d2, d1 * 10, rtol=1e-10)
+
+
 class TestCreateTable:
     """Tests for create_table function."""
 
