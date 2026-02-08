@@ -38,8 +38,8 @@ dev = [
 resistor = "resistor.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/commuted/e-table"
-Repository = "https://github.com/commuted/e-table"
+Homepage = "https://github.com/commuted/resistor"
+Repository = "https://github.com/commuted/resistor"
 
 [tool.setuptools.packages.find]
 where = ["src"]
