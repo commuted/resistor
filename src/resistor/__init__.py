@@ -8,7 +8,7 @@ from .solver import (
     e_decade_table,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = [
     "find_best_resistor_config",
     "create_table",

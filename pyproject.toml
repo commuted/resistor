@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "resistor"
-version = "0.1.1"
+version = "0.2.0"
 description = "Find optimal resistor configurations using E-series standards"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,9 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
 ]
-dependencies = [
-    "numpy>=1.24.0",
-]
+dependencies = []
 
 [project.optional-dependencies]
 dev = [

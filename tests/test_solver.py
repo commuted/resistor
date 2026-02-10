@@ -1,6 +1,7 @@
 """Unit tests for resistor solver."""
 
-import numpy as np
+import math
+
 import pytest
 
 from resistor.solver import (
@@ -34,40 +35,39 @@ class TestEDecadeTable:
         """Decade 2 values should be 10x decade 1."""
         d1 = e_decade_table(es=96, decade=1)
         d2 = e_decade_table(es=96, decade=2)
-        np.testing.assert_allclose(d2, d1 * 10, rtol=1e-6)
+        for a, b in zip(d1, d2):
+            assert abs(b - a * 10) <= 1e-6 * abs(a * 10)
 
     def test_values_are_increasing(self):
         """Values within a decade should be monotonically increasing."""
         result = e_decade_table(es=96, decade=1)
-        assert np.all(np.diff(result) > 0)
+        assert all(b > a for a, b in zip(result, result[1:]))
 
     def test_known_e96_values(self):
         """Check some known E96 standard values exist."""
         result = e_decade_table(es=96, decade=1)
-        # Some standard E96 values in first decade
         expected_values = [1.0, 1.1, 1.21, 1.33, 1.47, 1.62, 1.78, 1.96]
         for val in expected_values:
-            assert np.any(np.isclose(result, val, rtol=0.01)), f"{val} not found"
-
+            assert any(math.isclose(r, val, rel_tol=0.01) for r in result), f"{val} not found"
 
     def test_e24_iec_standard_values(self):
         """E24 first-decade values should match IEC 60063 exactly."""
         result = e_decade_table(es=24, decade=1)
         expected = [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0,
                     3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1]
-        np.testing.assert_array_equal(result, expected)
+        assert result == expected
 
     def test_e12_iec_standard_values(self):
         """E12 first-decade values should match IEC 60063 exactly."""
         result = e_decade_table(es=12, decade=1)
         expected = [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2]
-        np.testing.assert_array_equal(result, expected)
+        assert result == expected
 
     def test_e6_iec_standard_values(self):
         """E6 first-decade values should match IEC 60063 exactly."""
         result = e_decade_table(es=6, decade=1)
         expected = [1.0, 1.5, 2.2, 3.3, 4.7, 6.8]
-        np.testing.assert_array_equal(result, expected)
+        assert result == expected
 
     def test_e12_subset_of_e24(self):
         """E12 values should be a subset of E24."""
@@ -85,102 +85,104 @@ class TestEDecadeTable:
         """E24 decade 2 values should be 10x decade 1."""
         d1 = e_decade_table(es=24, decade=1)
         d2 = e_decade_table(es=24, decade=2)
-        np.testing.assert_allclose(d2, d1 * 10, rtol=1e-10)
+        for a, b in zip(d1, d2):
+            assert abs(b - a * 10) <= 1e-10 * abs(a * 10)
 
 
 class TestCreateTable:
     """Tests for create_table function."""
 
     def test_output_shape(self):
-        """Output should have shape (decades*es, 3)."""
+        """Output should have 576 rows of 3-tuples."""
         result = create_table(es=96, decades=6)
-        assert result.shape == (576, 3)
+        assert len(result) == 576
+        assert len(result[0]) == 3
 
     def test_columns_are_lo_nom_hi(self):
         """Columns should be [lo, nominal, hi] with lo < nom < hi."""
         result = create_table(es=96, decades=1)
-        lo, nom, hi = result[:, 0], result[:, 1], result[:, 2]
-        assert np.all(lo < nom)
-        assert np.all(nom < hi)
+        for lo, nom, hi in result:
+            assert lo < nom
+            assert nom < hi
 
     def test_tolerance_bounds(self):
         """Tolerance bounds should match specified tolerance."""
         result = create_table(es=96, decades=1, tolerance=0.01)
-        lo, nom, hi = result[:, 0], result[:, 1], result[:, 2]
-        np.testing.assert_allclose(lo, nom * 0.99, rtol=1e-10)
-        np.testing.assert_allclose(hi, nom * 1.01, rtol=1e-10)
+        for lo, nom, hi in result:
+            assert abs(lo - nom * 0.99) <= 1e-10 * abs(nom * 0.99)
+            assert abs(hi - nom * 1.01) <= 1e-10 * abs(nom * 1.01)
 
     def test_custom_tolerance(self):
         """Custom tolerance should be applied correctly."""
         result = create_table(es=96, decades=1, tolerance=0.05)
-        lo, nom, hi = result[:, 0], result[:, 1], result[:, 2]
-        np.testing.assert_allclose(lo, nom * 0.95, rtol=1e-10)
-        np.testing.assert_allclose(hi, nom * 1.05, rtol=1e-10)
+        for lo, nom, hi in result:
+            assert abs(lo - nom * 0.95) <= 1e-10 * abs(nom * 0.95)
+            assert abs(hi - nom * 1.05) <= 1e-10 * abs(nom * 1.05)
 
     def test_range_coverage(self):
         """6 decades should cover 1 ohm to ~1M ohm."""
         result = create_table(es=96, decades=6)
-        nom = result[:, 1]
-        assert nom.min() == 1.0
-        assert nom.max() > 900000  # Close to 1M
+        noms = [row[1] for row in result]
+        assert min(noms) == 1.0
+        assert max(noms) > 900000
 
 
 class TestCreateSeriesTable:
     """Tests for create_series_table function."""
 
     def test_output_shape(self):
-        """Output should have shape (N*N, 5)."""
-        base = create_table(es=24, decades=1)  # Small for speed
+        """Output should have N*(N+1)/2 rows of 5-tuples."""
+        base = create_table(es=24, decades=1)
         result = create_series_table(base)
-        assert result.shape == (24 * 24, 5)
+        assert len(result) == 24 * 25 // 2
+        assert len(result[0]) == 5
 
     def test_series_sum_correct(self):
         """Series nominal should equal R1 + R2."""
         base = create_table(es=24, decades=1)
         result = create_series_table(base)
-        # Check a few random entries
-        for i in [0, 100, 500]:
-            idx1, idx2 = int(result[i, 3]), int(result[i, 4])
-            expected = base[idx1, 1] + base[idx2, 1]
-            assert result[i, 1] == expected
+        for i in [0, 100, 299]:
+            idx1, idx2 = int(result[i][3]), int(result[i][4])
+            expected = base[idx1][1] + base[idx2][1]
+            assert result[i][1] == expected
 
     def test_indices_valid(self):
-        """Stored indices should be valid."""
+        """Stored indices should be valid and idx1 <= idx2."""
         base = create_table(es=24, decades=1)
         result = create_series_table(base)
-        indices = result[:, 3:5].astype(int)
-        assert np.all(indices >= 0)
-        assert np.all(indices < len(base))
+        for row in result:
+            assert 0 <= int(row[3]) <= int(row[4]) < len(base)
 
 
 class TestCreateParallelTable:
     """Tests for create_parallel_table function."""
 
     def test_output_shape(self):
-        """Output should have shape (N*N, 5)."""
+        """Output should have N*(N+1)/2 rows of 5-tuples."""
         base = create_table(es=24, decades=1)
         result = create_parallel_table(base)
-        assert result.shape == (24 * 24, 5)
+        assert len(result) == 24 * 25 // 2
+        assert len(result[0]) == 5
 
     def test_parallel_formula_correct(self):
         """Parallel nominal should equal (R1*R2)/(R1+R2)."""
         base = create_table(es=24, decades=1)
         result = create_parallel_table(base)
-        for i in [0, 100, 500]:
-            idx1, idx2 = int(result[i, 3]), int(result[i, 4])
-            r1, r2 = base[idx1, 1], base[idx2, 1]
+        for i in [0, 100, 299]:
+            idx1, idx2 = int(result[i][3]), int(result[i][4])
+            r1, r2 = base[idx1][1], base[idx2][1]
             expected = (r1 * r2) / (r1 + r2)
-            np.testing.assert_allclose(result[i, 1], expected, rtol=1e-10)
+            assert abs(result[i][1] - expected) <= 1e-10 * abs(expected)
 
     def test_parallel_less_than_either(self):
         """Parallel combination should be less than either resistor."""
         base = create_table(es=24, decades=1)
         result = create_parallel_table(base)
-        for i in [0, 100, 500]:
-            idx1, idx2 = int(result[i, 3]), int(result[i, 4])
-            r1, r2 = base[idx1, 1], base[idx2, 1]
-            assert result[i, 1] < r1 or np.isclose(r1, r2)
-            assert result[i, 1] < r2 or np.isclose(r1, r2)
+        for i in [0, 100, 299]:
+            idx1, idx2 = int(result[i][3]), int(result[i][4])
+            r1, r2 = base[idx1][1], base[idx2][1]
+            assert result[i][1] < r1 or math.isclose(r1, r2)
+            assert result[i][1] < r2 or math.isclose(r1, r2)
 
 
 class TestFindBestResistorConfig:
@@ -216,7 +218,6 @@ class TestFindBestResistorConfig:
     def test_exact_match_has_zero_score(self, tables):
         """An exact E96 value should have score near zero."""
         base, series, parallel = tables
-        # 1000 ohms is an E96 value
         result = find_best_resistor_config(1000, base, series, parallel, n=1)
         assert result[0]["score"] < 1e-8
 
@@ -255,23 +256,20 @@ class TestFindBestResistorConfig:
         """Tolerance percentages should match 1% tolerance."""
         base, series, parallel = tables
         result = find_best_resistor_config(1000, base, series, parallel, n=1)
-        # For 1% tolerance, should be close to 1.0
         assert 0.99 < result[0]["lower_tol_pct"] < 1.01
         assert 0.99 < result[0]["upper_tol_pct"] < 1.01
 
     def test_target_outside_range(self, tables):
         """Should still return results for targets outside normal range."""
         base, series, parallel = tables
-        # Very small target
         result = find_best_resistor_config(0.1, base, series, parallel, n=1)
         assert len(result) == 1
-        assert result[0]["score"] > 0  # Won't be exact match
+        assert result[0]["score"] > 0
 
     def test_specific_value_1580(self, tables):
         """Verify known result for 1580 ohms."""
         base, series, parallel = tables
         result = find_best_resistor_config(1580, base, series, parallel, n=1)
-        # 1580 is an E96 value, should find exact match
         assert result[0]["config"] == "single"
         assert result[0]["nominal"] == 1580.0
         assert result[0]["score"] < 1e-8
