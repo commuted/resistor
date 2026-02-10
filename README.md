@@ -13,8 +13,8 @@ pip install resistor
 Or install from source:
 
 ```bash
-git clone https://github.com/commuted/e-table.git
-cd e-table
+git clone https://github.com/commuted/resistor.git
+cd resistor
 pip install -e .
 ```
 
