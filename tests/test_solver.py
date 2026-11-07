@@ -208,12 +208,31 @@ class TestFindBestResistorConfig:
         result = find_best_resistor_config(1000, base, series, parallel, n=5)
         assert len(result) == 5
 
-    def test_results_sorted_by_score(self, tables):
-        """Results should be sorted by score ascending."""
+    def test_results_sorted_by_rank_key(self, tables):
+        """Results should follow the documented ranking order.
+
+        Covering candidates first (fewer parts, then best centring), then
+        misses (smallest miss, then fewer parts).
+        """
         base, series, parallel = tables
         result = find_best_resistor_config(1234, base, series, parallel, n=10)
-        scores = [r["score"] for r in result]
-        assert scores == sorted(scores)
+
+        def key(r):
+            parts = len(r["resistors"])
+            covers = r["lo"] <= 1234 <= r["hi"]
+            return (0, parts, r["score"]) if covers else (1, r["score"], parts)
+
+        keys = [key(r) for r in result]
+        assert keys == sorted(keys)
+
+    def test_covering_scores_sorted_within_part_count(self, tables):
+        """Among covering results with the same part count, score ascends."""
+        base, series, parallel = tables
+        result = find_best_resistor_config(1234, base, series, parallel, n=20)
+        for parts in (1, 2):
+            scores = [r["score"] for r in result
+                      if len(r["resistors"]) == parts and r["lo"] <= 1234 <= r["hi"]]
+            assert scores == sorted(scores)
 
     def test_exact_match_has_zero_score(self, tables):
         """An exact E96 value should have score near zero."""
